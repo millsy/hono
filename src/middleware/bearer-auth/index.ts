@@ -110,18 +110,21 @@ export const bearerAuth = (options: BearerAuthOptions): MiddlewareHandler => {
   }
 
   return async function bearerAuth(c, next) {
-    let selectedHeaderName = HEADER
+    let selectedHeaderName:string = ''
     if(options.headerName && Array.isArray(options.headerName)){
-      for(let header of options.headerName){
+      for(const header of options.headerName){
         if(c.req.header(header)){
           selectedHeaderName = header
           break
         }
       }
-    }else if(options.headerName != null && typeof options.headerName === 'string'){
+    }else if(options.headerName != null && !Array.isArray(options.headerName)){
       selectedHeaderName = options.headerName
+    }else{
+      selectedHeaderName = HEADER //default when nothing set
     }
-    const headerToken = c.req.header(selectedHeaderName)
+    
+    const headerToken = selectedHeaderName != '' ? c.req.header(selectedHeaderName) : false
     if (!headerToken) {
       // No Authorization header
       await throwHTTPException(

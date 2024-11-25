@@ -29,11 +29,11 @@ describe('Bearer Auth by Middleware', () => {
       return c.text('auth bot')
     })
 
-    app.use('/apiKey/*', bearerAuth({ token, prefix: '', headerName: 'X-Api-Key' }))
+    app.use('/apiKey/*', bearerAuth({ token, prefix: '', headerName: ['X-Api-Key','X-Api-Key-Array'] }))
     app.get('/apiKey/*', (c) => {
       handlerExecuted = true
       return c.text('auth apiKey')
-    })
+    })    
 
     app.use('/nested/*', async (c, next) => {
       const auth = bearerAuth({ token })
@@ -292,6 +292,16 @@ describe('Bearer Auth by Middleware', () => {
   it('Should authorize', async () => {
     const req = new Request('http://localhost/apiKey/a')
     req.headers.set('X-Api-Key', 'abcdefg12345-._~+/=')
+    const res = await app.request(req)
+    expect(res).not.toBeNull()
+    expect(res.status).toBe(200)
+    expect(handlerExecuted).toBeTruthy()
+    expect(await res.text()).toBe('auth apiKey')
+  })
+
+  it('Should authorize Array', async () => {
+    const req = new Request('http://localhost/apiKey/a')
+    req.headers.set('X-Api-Key-Array', 'abcdefg12345-._~+/=')
     const res = await app.request(req)
     expect(res).not.toBeNull()
     expect(res.status).toBe(200)
