@@ -20,7 +20,7 @@ type BearerAuthOptions =
       token: string | string[]
       realm?: string
       prefix?: string
-      headerName?: string
+      headerName?: string | string[]
       hashFunction?: Function
       noAuthenticationHeaderMessage?: string | object | MessageFunction
       invalidAuthenticationHeaderMessage?: string | object | MessageFunction
@@ -29,7 +29,7 @@ type BearerAuthOptions =
   | {
       realm?: string
       prefix?: string
-      headerName?: string
+      headerName?: string | string[]
       verifyToken: (token: string, c: Context) => boolean | Promise<boolean>
       hashFunction?: Function
       noAuthenticationHeaderMessage?: string | object | MessageFunction
@@ -110,7 +110,18 @@ export const bearerAuth = (options: BearerAuthOptions): MiddlewareHandler => {
   }
 
   return async function bearerAuth(c, next) {
-    const headerToken = c.req.header(options.headerName || HEADER)
+    let selectedHeaderName = HEADER
+    if(options.headerName && Array.isArray(options.headerName)){
+      for(let header of options.headerName){
+        if(c.req.header(header)){
+          selectedHeaderName = header
+          break
+        }
+      }
+    }else if(options.headerName != null && typeof options.headerName === 'string'){
+      selectedHeaderName = options.headerName
+    }
+    const headerToken = c.req.header(selectedHeaderName)
     if (!headerToken) {
       // No Authorization header
       await throwHTTPException(
